@@ -1,0 +1,27 @@
+---
+- name: Create new wordpress docker container
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Create new docker compose file
+      template:
+        src: docker-compose.j2
+        dest: "{{compose_file_dir}}/docker-compose2.yml"
+        owner: root
+        group: root
+        mode: 0777
+    - name: Run docker compose to start container
+      shell: "docker-compose -f docker-compose2.yml up -d"
+      args:
+        chdir: "{{compose_file_dir}}"
+    - name: Waiting for docker containers to start up
+      pause:
+         seconds: 10
+    - name: Configure nginx to forward traffic
+      uri:
+        url: "{{nginxRest_url}}"
+        method: POST
+        body: "{{json_body }}"
+        body_format: json
+        status_code: 201
