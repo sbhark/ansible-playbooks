@@ -1,0 +1,25 @@
+---
+- name: Mount Lucidlink Volume
+  become: true
+  hosts: all
+
+  tasks:
+    - name: Starting Lucid daemon
+      script: startlucid.sh 1
+
+    - name: Initialize LucidLink S3 Volume
+      shell: "lucid --instance {{ lucid_instance_id }} init-s3 --fs {{ lucid_space }} --password {{ lucid_space_password }} --access-key {{ s3_access_key }} --secret-key {{ s3_secret_key }} --bucket-name {{ s3_bucket_name }} --provider aws --region {{ s3_region }} --endpoint {{ s3_endpoint}}"
+
+    - name: Link LucidLink S3 volume to host
+      shell: "lucid --instance {{ lucid_instance_id }} link --fs {{ lucid_space }} --password {{ lucid_space_password }}"
+
+    - name: Creating Lucid volume mount point
+      file:
+        path: "{{ lucid_space_mount_point }}"
+        state: directory
+
+    - name: Mount LucidLink Volume to host
+      shell: "lucid --instance {{ lucid_instance_id }} mount --mount-point {{ lucid_space_mount_point }} --fuse-allow-other"
+
+    - name: Create docker volume mapped to LucidLink volume
+      shell: "docker volume create -d local -o type=none -o device={{ lucid_space_mount_point }} -o o=bind {{ docker_volume }}"

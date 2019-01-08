@@ -1,0 +1,25 @@
+---
+- name: Install LucidLink
+  hosts: all
+  become: true
+  vars:
+    lucid_package: lucid_1.12.1570_amd64.deb
+
+  tasks:
+  - name: Installing package dependencies required by LucidLink
+    apt:
+      name: libappindicator1
+      update_cache: yes
+      state: latest
+  - name: Download dpkg package from Lucidlink
+    get_url:
+      url: https://s3.amazonaws.com/lucidlink-builds/latest/lin64/{{lucid_package}}
+      dest: /tmp/
+  - name: Install dpkg package downloaded from Lucidlink
+    apt:
+      deb: /tmp/{{lucid_package}}
+  - name: Cleaning up after install
+    file:
+      path: "/tmp/{{lucid_package}}"
+      state: absent
+    
