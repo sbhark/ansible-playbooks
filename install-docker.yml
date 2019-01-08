@@ -1,0 +1,41 @@
+---
+- name: Install docker
+  hosts: all
+  become: yes
+
+  tasks:
+  - name: Install Docker pre-reqs
+    apt:
+      name: "{{ packages }}"
+      update_cache: yes
+      state: latest
+    vars:
+      packages:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg2
+      - software-properties-common
+  - name: Add Docker GPG key
+    apt_key:
+      id: 0EBFCD88
+      url: https://download.docker.com/linux/debian/gpg
+      state: present
+  - name: Add Docker apt repository
+    apt_repository:
+      repo: "deb [arch=amd64] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
+      state: present
+  - name: Install Docker
+    apt:
+      name: docker-ce
+      update_cache: yes
+      state: latest
+  - name: Install Docker Compose
+    block:
+      - get_url:
+          url: "https://github.com/docker/compose/releases/download/{{compose_version}}/docker-compose-Linux-x86_64"
+          dest: "{{ compose_bin }}"
+          mode: a+x
+    vars:
+      compose_bin: "/usr/local/bin/docker-compose"
+      compose_version: "1.23.2"
